@@ -1,5 +1,7 @@
 # Памятка по работе с проектом
-
+Мерзлякова Марина Сергеевна
+marinakms@yandex.ru
+@MarSerMer
 ## Начало работы с проектом
 Для начала работы с проектом необходимо создать репозиторий по [шаблону](https://github.com/ktsstudio/backend-school-template-project). Для этого используйте кнопку "Use this template".
 
