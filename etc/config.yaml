@@ -8,3 +8,18 @@ sentry:
   env: dev
 
 store: {}
+
+bot:
+  token: vk1.a.IiUaEgMfHOSHG9qwiMQQ2OoZu8VfvS_iJPNOAuvUedKRkXboMEgwLYVUG4bDg8gZ7MP1EreMDmmrYWSEo1qqw9nRpyaJrwr5wJl5jBDkXAJoXOtLiMQwKN4-LZl8HUCDAc11q5l8jY5GU_FKa3ASmyJJrUmslZEyl5DVIonaMe4-6gPik_jXoAuHCwLhZ1S2ZoEJ4pHKZsR-wSBlEZcbJw
+  group_id: 225564363
+database:
+  host: localhost
+  port: 5432
+  user: postgres
+  password: Shavanahola
+  database: WhatWhereWhen
+admin:
+  email: admin@admin.com
+  password: admin
+session:
+  key: CaY5iCkYtN7DqXdiYK1BvmGrQuaSA4Tl4bEk9my0jc0=
