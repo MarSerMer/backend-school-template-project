@@ -4,12 +4,14 @@ from sqlalchemy import Column, Integer, String
 
 from app.store.database.sqlalchemy_base import BaseModel
 
+
 @dataclass
 class User:
     id: int
     vk_id: int
     first_name: str
     last_name: str
+
 
 class UserModel(BaseModel):
     __tablename__ = "users"

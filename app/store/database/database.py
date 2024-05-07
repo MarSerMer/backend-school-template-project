@@ -1,9 +1,10 @@
-from typing import TYPE_CHECKING, Any, Union, TypeVar, List
+from typing import TYPE_CHECKING, Any, TypeVar, Union
 
 from sqlalchemy.ext.asyncio import (
     AsyncEngine,
     AsyncSession,
-    async_sessionmaker, create_async_engine,
+    async_sessionmaker,
+    create_async_engine,
 )
 from sqlalchemy.orm import DeclarativeBase
 
@@ -34,19 +35,24 @@ class Database:
             expire_on_commit=False,
         )
 
-        async def disconnect(self, *args: Any, **kwargs: Any) -> None:
-            if self.engine:
-                await self.engine.dispose()
+    async def disconnect(self, *args: Any, **kwargs: Any) -> None:
+        if self.engine:
+            await self.engine.dispose()
 
-        async def select_from_database(self, query):
-            async  with self.session() as session:
-                info_from_base = await session.execute(query)
-                return info_from_base
+    async def select_from_database(self, query):
+        async with self.session() as session:
+            return await session.execute(query)
 
-        async def add_to_database(self, obj: Union[TypeVar, List[TypeVar]]):
-            async with self.session() as session:
-                if isinstance(obj, list):
-                    session.add_all(obj)
-                else:
-                    session.add(obj)
-                await session.commit()
+    async def add_to_database(self, obj: TypeVar | list[TypeVar]):
+        async with self.session() as session:
+            if isinstance(obj, list):
+                session.add_all(obj)
+            else:
+                session.add(obj)
+            await session.commit()
+
+    async def delete_from_database(self, query):
+        async with self.session() as session:
+            delete_it = await self.select_from_database(query)
+            await session.delete(delete_it)
+            await session.commit()

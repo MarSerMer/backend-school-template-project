@@ -1,11 +1,9 @@
 from dataclasses import dataclass
+from hashlib import sha256
 
 from sqlalchemy import Column, Integer, String
 
 from app.store.database.sqlalchemy_base import BaseModel
-
-from typing import Optional
-from hashlib import sha256
 
 
 class AdminModel(BaseModel):
@@ -20,7 +18,7 @@ class AdminModel(BaseModel):
 class Admin:
     id: int
     email: str
-    password: Optional[str] = None
+    password: str = None
 
     @staticmethod
     def hash_password(password: str) -> str:
@@ -30,5 +28,5 @@ class Admin:
         return self.hash_password(password) == self.password
 
     @classmethod
-    def admin_from_session(cls, session: Optional[dict]) -> Optional["Admin"]:
+    def admin_from_session(cls, session: dict | None):
         return cls(id=session["admin"]["id"], email=session["admin"]["email"])
