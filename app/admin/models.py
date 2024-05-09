@@ -18,7 +18,7 @@ class AdminModel(BaseModel):
 class Admin:
     id: int
     email: str
-    password: str = None
+    password: str | None = None
 
     @staticmethod
     def hash_password(password: str) -> str:

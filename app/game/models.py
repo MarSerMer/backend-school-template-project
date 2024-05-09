@@ -26,11 +26,9 @@ class Game(BaseModel):
     id = Column(Integer, primary_key=True, autoincrement=True)
     chat_id = Column(Integer, nullable=False)
     captain = Column(ForeignKey("users.id"))
-    players = relationship("UserModel",
-                           secondary="game_user")
+    players = relationship("UserModel", secondary="game_user")
     finished = Column(String, default="Not finished")
     winner = Column(String, default="No winner")
     players_count = Column(Integer, default=0)
     bot_count = Column(Integer, default=0)
-    questions = relationship("QuestionModel",
-                             secondary="game_question")
+    questions = relationship("QuestionModel", secondary="game_question")

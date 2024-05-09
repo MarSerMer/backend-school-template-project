@@ -28,5 +28,6 @@ class AnswerModel(BaseModel):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     answer = Column(String, nullable=False)
-    question_id = Column(ForeignKey("questions.id", ondelete="CASCADE"),
-                         nullable=False)
+    question_id = Column(
+        ForeignKey("questions.id", ondelete="CASCADE"), nullable=False
+    )

@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Any, TypeVar, Union
+from typing import TYPE_CHECKING, Any, TypeVar
 
 from sqlalchemy.ext.asyncio import (
     AsyncEngine,
@@ -25,10 +25,7 @@ class Database:
         self._db = BaseModel()
         db_data = self.app.config.database
         database_url = f"postgresql+asyncpg://{db_data.user}:{db_data.password}@{db_data.host}/{db_data.database}"
-        self.engine = create_async_engine(
-            database_url,
-            echo=True
-        )
+        self.engine = create_async_engine(database_url, echo=True)
         self.session = async_sessionmaker(
             bind=self.engine,
             class_=AsyncSession,
