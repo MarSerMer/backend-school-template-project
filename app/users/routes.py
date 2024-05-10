@@ -1,7 +1,11 @@
-from aiohttp.web_app import Application
+import typing
 
-__all__ = ("register_urls",)
+from app.users.views import UsersView
+
+if typing.TYPE_CHECKING:
+    from app.web.app import Application
 
 
-def register_urls(application: Application):
-    pass
+def setup_routes(app: "Application"):
+    # добавить вопрос
+    app.router.add_view("/all_users", UsersView)
