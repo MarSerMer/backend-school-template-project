@@ -23,8 +23,8 @@ class AdminLoginView(View):
         try:
             email = data["email"]
             password = data["password"]
-        except KeyError:
-            raise HTTPBadRequest from None
+        except KeyError as exc:
+            raise HTTPBadRequest from exc
         person = await self.store.admins.get_by_email(email=email)
         if person and person.password == sha256(password.encode()).hexdigest():
             raw_admin = AdminSchema().dump(person)

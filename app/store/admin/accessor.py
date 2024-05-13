@@ -24,10 +24,7 @@ class AdminAccessor(BaseAccessor):
     async def get_by_email(self, email: str) -> Admin | None:
         query = select(AdminModel).where(AdminModel.email == email)
         result = await self.app.database.select_from_database(query=query)
-        adm = result.scalar()
-        if adm:
-            return adm
-        return None
+        return result.scalar()
 
     async def create_admin(self, email: str, password: str):
         if not await self.get_by_email(email):

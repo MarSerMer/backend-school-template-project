@@ -8,7 +8,6 @@ from aiohttp_apispec import (
 
 from app.question.schemes import (
     AnswerSchema,
-    QuestionAnswerSchema,
     QuestionIdSchema,
     QuestionSchema,
 )
@@ -18,6 +17,8 @@ from app.web.utils import json_response
 
 
 class QuestionAddView(AuthRequiredMixin, View):
+    """Позволяет добавить вопрос"""
+
     @docs(
         tags=["Metaclass_project"],
         summary="Question add",
@@ -34,6 +35,8 @@ class QuestionAddView(AuthRequiredMixin, View):
 
 
 class AnswerAddView(AuthRequiredMixin, View):
+    """Позволяет добавить ответ на существующий вопрос"""
+
     @docs(
         tags=["Metaclass_project"],
         summary="Answer add",
@@ -44,17 +47,14 @@ class AnswerAddView(AuthRequiredMixin, View):
     async def post(self):
         a = self.data["answer"]
         q_id = self.data["question_id"]
-        new_a = await self.request.app.store.questions.create_answer(
-            answer=a, q_id=q_id
-        )
-        # важно: наличие соответствующего вопроса проверяет аксессор!
-        # если что, он raise HTTPNotFound
-        # и уж если мы вернулись сюда, то вопрос такой в базе есть!
+        if not await self.store.questions.get_question_for_bot(q_id=q_id):
+            raise HTTPNotFound
+        new_a = await self.store.questions.create_answer(answer=a, q_id=q_id)
         return json_response(data=AnswerSchema().dump(new_a))
 
 
 class QuestionView(AuthRequiredMixin, View):
-    """Позволяет посмотреть конкретный вопрос (без ответа)
+    """Позволяет посмотреть конкретный вопрос по id (без ответа)
     или же все вопросы (без ответов)
     """
 
@@ -73,34 +73,6 @@ class QuestionView(AuthRequiredMixin, View):
         questions = await self.store.questions.get_question_for_view(q_id=q_id)
         result = [QuestionSchema().dump(q) for q in questions]
         return json_response(data={"questions": result})
-
-
-class AnswersView(AuthRequiredMixin, View):
-    # предполагается, что если в строке запроса есть id вопроса,
-    # то функция должна отдать только этот вопрос и его ответ/ответы
-    # либо, если такого вопроса нет, то аксессор raise HTTPNotFound.
-    # если id вопроса отсутствует, то функция должна
-    # выдать все вопросы и ответы на них
-    # логика в аксессоре
-    @docs(
-        tags=["Metaclass_project"],
-        summary="See answers to question or all questions and answers",
-        description="Allows to see answers to question "
-        "or all questions and answers",
-    )
-    @querystring_schema(QuestionIdSchema)
-    @response_schema(QuestionAnswerSchema)
-    async def get(self):
-        q_id = self.request.query.get("q_id")
-        if q_id:
-            q_id = int(q_id)
-            if not await self.store.questions.get_question_for_bot(q_id=q_id):
-                raise HTTPNotFound
-        answers = await self.store.questions.list_answers(q_id=q_id)
-        res = [QuestionAnswerSchema().dump(ans) for ans in answers]
-        # TODO почему-то не выдаёт собственно ответы,
-        #  хотя join работает (см. скрин)
-        return json_response(data={"questions and answers": res})
 
 
 class AnswersListView(AuthRequiredMixin, View):
