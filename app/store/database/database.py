@@ -24,7 +24,12 @@ class Database:
     async def connect(self, *args: Any, **kwargs: Any) -> None:
         self._db = BaseModel()
         db_data = self.app.config.database
-        database_url = f"postgresql+asyncpg://{db_data.user}:{db_data.password}@{db_data.host}/{db_data.database}"
+        database_url = (
+            f"postgresql+asyncpg://{db_data.user}:"
+            f"{db_data.password}@"
+            f"{db_data.host}"
+            f"/{db_data.database}"
+        )
         self.engine = create_async_engine(database_url, echo=True)
         self.session = async_sessionmaker(
             bind=self.engine,
@@ -46,10 +51,4 @@ class Database:
                 session.add_all(obj)
             else:
                 session.add(obj)
-            await session.commit()
-
-    async def delete_from_database(self, query):
-        async with self.session() as session:
-            delete_it = await self.select_from_database(query)
-            await session.delete(delete_it)
             await session.commit()
