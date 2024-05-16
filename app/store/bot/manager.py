@@ -29,19 +29,7 @@ class BotManager:
             for update in updates:
                 mess = update.object.message.text.split("] ")[-1]
                 chat_id = update.object.message.peer_id - STRANGE_NUM_FROM_VK
-                if update.object.message.payload.isdigit() and \
-                        update.object.message.from_id == \
-                        int(update.object.message.payload):
-                    if mess == CHOOSE_ANSWERING_COMMAND:
-                        await self.app.store.vk_api.send_message_to_chat(
-                            chat_id=chat_id,
-                            message=CAP_BUTTONS_COMMENT,
-                            keyboard=await \
-                                self.app.store.vk_api.get_captain_choise_keyboard(
-                                    # TODO оформить кнопки с именами игроков
-                                )
-                        )
-                elif mess == START_COMMAND:
+                if mess == START_COMMAND:
                     await self.app.store.vk_api.send_message_to_chat(
                         message=GREETING_TEXT,
                         chat_id=chat_id,
@@ -83,27 +71,24 @@ class BotManager:
                         # вытаскивать по идексу,
                         # а индекс = сумма полученных очков
                         ind_q: int = game.bot_count + game.players_count
-                        # ques = await self.app.store.questions.get_question_for_bot(
-                        #     q_id=game.questions[ind_q]
-                        # )
                         question: str = game.questions[ind_q].question
                         self.logger.info(question)
+                        msg = f"Капитан:  {captain}\n" \
+                              f"Внимание, вопрос: {question}\n" \
+                              f"{CAP_BUTTONS_COMMENT}"
                         await self.app.store.vk_api.send_message_to_chat(
                             chat_id=chat_id,
-                            message=f"Капитан: {captain}",
-                            keyboard='{"buttons":[]}'
-                        )
-                        await self.app.store.vk_api.send_message_to_chat(
-                            chat_id=chat_id,
-                            message=f"Внимание, вопрос: {question}",
-                            keyboard='{"buttons":[]}'
-                        )
-                        await self.app.store.vk_api.send_message_to_chat(
-                            chat_id=chat_id,
-                            message=CAP_BUTTONS_COMMENT,
+                            message=msg,
                             keyboard=await \
-                                self.app.store.vk_api.get_captain_game_keyboard(
-                                    cap_vk_id=cap.vk_id
+                                self.app.store.vk_api.get_captain_game_keyboard()
+                        )
+                        # TODO определиться, выводить ли вообще кнопку "выбрать отвечающего"
+                        await self.app.store.vk_api.send_message_to_chat(
+                            chat_id=chat_id,
+                            message="Капитан может выбрать отвечающего: ",
+                            keyboard=await \
+                                self.app.store.vk_api.get_captain_choice_keyboard(
+                                    players=players
                                 )
                         )
                         # TODO переделать или снести,
@@ -113,7 +98,4 @@ class BotManager:
                     # взять игру и записать в БД результат и
                     # поставить флаг, что она окончена
                     pass
-                elif mess == CHOOSE_ANSWERING_COMMAND:
-                    # кнопки, кнопки с именами!
-                    # ну и дальше действия по ответу
-                    pass
+

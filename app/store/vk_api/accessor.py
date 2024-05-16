@@ -116,12 +116,12 @@ class VKApiAccessor(BaseAccessor):
                             from_id=update["object"]["message"]["from_id"],
                             text=update["object"]["message"]["text"],
                             peer_id=update["object"]["message"]["peer_id"],
-                            payload=update["object"]["message"]["payload"]
                         )
                     ),
                 )
                 for update in data.get("updates", [])
             ]
+            self.logger.info(updates)
             await self.app.store.bot_manager.handle_updates(updates)
 
     async def send_message(self, message: Message) -> None:
@@ -207,12 +207,10 @@ class VKApiAccessor(BaseAccessor):
 
     @staticmethod
     async def one_button_creater(
-            text: str, color: str, payload: str = '{"button": "' + "1" + '"}'
-    ) -> dict:
+            text: str, color: str) -> dict:
         return {
             "action": {
                 "type": "text",
-                "payload": payload,
                 "label": text,
             },
             "color": color,
@@ -233,35 +231,35 @@ class VKApiAccessor(BaseAccessor):
         keyboard = json.dumps(keyboard, ensure_ascii=False).encode("utf-8")
         return str(keyboard.decode("utf-8"))
 
-    async def get_captain_game_keyboard(self, cap_vk_id: int) -> str:
-        c_vk_id = str(cap_vk_id)
+    async def get_captain_game_keyboard(self) -> str:
         keyboard = {
             "inline": True,
             "buttons": [
-                await self.one_button_creater(
-                    text=CHOOSE_ANSWERING_COMMAND,
-                    color="positive",
-                    payload=c_vk_id
-                ),
-                await self.one_button_creater(
-                    text=STOP_GAME_COMMAND,
-                    color="secondary",
-                    payload=c_vk_id),
+                [
+                    await self.one_button_creater(
+                        text=CHOOSE_ANSWERING_COMMAND,
+                        color="positive",
+                    ),
+                    await self.one_button_creater(
+                        text=STOP_GAME_COMMAND,
+                        color="secondary"),
+                ]
             ],
         }
         keyboard = json.dumps(keyboard, ensure_ascii=False).encode("utf-8")
         return str(keyboard.decode("utf-8"))
 
-    async def get_captain_choise_keyboard(self, players: list) -> str:
+    async def get_captain_choice_keyboard(self, players: list[UserModel]) -> str:
+        buttons = [await self.one_button_creater(
+            text=f"Отвечает {pl.first_name} {pl.last_name}",
+            color="secondary"
+        ) for pl in players]
         keyboard = {
             # отобразится под полем ввода сообщения
             "inline": False,
             # скроется после нажатия на кнопку
             "one_time": True,
-            "buttons": [
-                # TODO сюда кнопки с именами участников
-                #  и передавать vk_id в payload?
-            ],
+            "buttons": [buttons],
         }
         keyboard = json.dumps(keyboard, ensure_ascii=False).encode("utf-8")
         return str(keyboard.decode("utf-8"))
