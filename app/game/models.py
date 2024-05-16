@@ -1,7 +1,11 @@
+from dataclasses import dataclass
+
 from sqlalchemy import Column, ForeignKey, Integer, String
 from sqlalchemy.orm import relationship
 
+from app.question.models import QuestionModel
 from app.store.database.sqlalchemy_base import BaseModel
+from app.users.models import UserModel
 
 
 class GamesQuestionsTable(BaseModel):
@@ -32,3 +36,16 @@ class Game(BaseModel):
     players_count = Column(Integer, default=0)
     bot_count = Column(Integer, default=0)
     questions = relationship("QuestionModel", secondary="game_question")
+
+
+@dataclass
+class GameDataclass:
+    id: int
+    chat_id: int
+    captain: int
+    players: list[UserModel]
+    finished: str
+    winner: str
+    players_count: int
+    bot_count: int
+    questions: list[QuestionModel]
