@@ -15,6 +15,7 @@ from app.store.bot.constants import (
     MAX_PLAYERS_IN_TEAM,
     START_GAME_COMMAND,
     STOP_GAME_COMMAND,
+    STRANGE_NUM_FROM_VK,
 )
 from app.store.vk_api.dataclasses import (
     Message,
@@ -52,13 +53,6 @@ class VKApiAccessor(BaseAccessor):
         self.poller = Poller(app.store)
         self.logger.info("start polling")
         self.poller.start()
-        # это мне, потом нужно это снести
-        await self.send_message(
-            Message(
-                user_id=4583,
-                text="vk_api accessor started its work (строка 56)",
-            )
-        )
 
     async def disconnect(self, app: "Application") -> None:
         if self.session:
@@ -78,36 +72,36 @@ class VKApiAccessor(BaseAccessor):
         получает его параметры и записывает в аксессор
         """
         async with self.session.get(
-            self._build_query(
-                host=API_PATH,
-                method="groups.getLongPollServer",
-                params={
-                    "group_id": self.app.config.bot.group_id,
-                    "access_token": self.app.config.bot.token,
-                },
-            )
+                self._build_query(
+                    host=API_PATH,
+                    method="groups.getLongPollServer",
+                    params={
+                        "group_id": self.app.config.bot.group_id,
+                        "access_token": self.app.config.bot.token,
+                    },
+                )
         ) as response:
             data = (await response.json())["response"]
             self.key = data["key"]
             self.server = data["server"]
             self.ts = data["ts"]
-            print(data)
+            self.logger.info(data)
 
     async def poll(self):
         """Отправляет LongPoll запрос
         и получает список обновлений класса Update
         """
         async with self.session.get(
-            self._build_query(
-                host=self.server,
-                method="",
-                params={
-                    "act": "a_check",
-                    "key": self.key,
-                    "ts": self.ts,
-                    "wait": 30,
-                },
-            )
+                self._build_query(
+                    host=self.server,
+                    method="",
+                    params={
+                        "act": "a_check",
+                        "key": self.key,
+                        "ts": self.ts,
+                        "wait": 30,
+                    },
+                )
         ) as response:
             data = await response.json()
             self.logger.info(data)
@@ -122,6 +116,7 @@ class VKApiAccessor(BaseAccessor):
                             from_id=update["object"]["message"]["from_id"],
                             text=update["object"]["message"]["text"],
                             peer_id=update["object"]["message"]["peer_id"],
+                            payload=update["object"]["message"]["payload"]
                         )
                     ),
                 )
@@ -132,65 +127,60 @@ class VKApiAccessor(BaseAccessor):
     async def send_message(self, message: Message) -> None:
         """Позволяет отправить сообщение пользователю"""
         async with self.session.get(
-            self._build_query(
-                API_PATH,
-                "messages.send",
-                params={
-                    "user_id": message.user_id,
-                    "random_id": random.randint(1, 2**32),
-                    "peer_id": f"-{self.app.config.bot.group_id}",
-                    "message": message.text,
-                    "access_token": self.app.config.bot.token,
-                },
-            )
+                self._build_query(
+                    API_PATH,
+                    "messages.send",
+                    params={
+                        "user_id": message.user_id,
+                        "random_id": random.randint(1, 2 ** 32),
+                        "peer_id": f"-{self.app.config.bot.group_id}",
+                        "message": message.text,
+                        "access_token": self.app.config.bot.token,
+                    },
+                )
         ) as response:
             data = await response.json()
             self.logger.info(data)
 
     async def send_message_to_chat(
-        self, chat_id: int, message: str, keyboard=None
+            self, chat_id: int, message: str, keyboard='{"buttons":[]}'
     ) -> None:
         """Позволяет отправить сообщение в конкретный чат
         Может использовать кнопки
         """
         async with self.session.get(
-            self._build_query(
-                API_PATH,
-                "messages.send",
-                params={
-                    "random_id": random.randint(1, 2**32),
-                    "chat_id": chat_id,
-                    "message": message,
-                    "access_token": self.app.config.bot.token,
-                    "keyboard": keyboard,
-                },
-            )
+                self._build_query(
+                    API_PATH,
+                    "messages.send",
+                    params={
+                        "random_id": random.randint(1, 2 ** 32),
+                        "chat_id": chat_id,
+                        "message": message,
+                        "access_token": self.app.config.bot.token,
+                        "keyboard": keyboard,
+                    },
+                )
         ) as resp:
             data = await resp.json()
             self.logger.info(data)
 
-    async def get_chat_members_online(self, chat_id: int) -> list[UserModel]:
-        """Позволяет получить участников чата в виде списка UserModel.
-        По идее, в список попадут только те участники, которые сейчас онлайн
-        """
+    async def get_chat_members(self, chat_id: int) -> list[UserModel]:
+        """Позволяет получить участников чата в виде списка UserModel"""
         async with self.session.get(
-            self._build_query(
-                API_PATH,
-                "messages.getConversationMembers",
-                params={
-                    "peer_id": 2000000000 + chat_id,
-                    "fields": "id",
-                    "access_token": self.app.config.bot.token,
-                },
-            )
+                self._build_query(
+                    API_PATH,
+                    "messages.getConversationMembers",
+                    params={
+                        "peer_id": STRANGE_NUM_FROM_VK + chat_id,
+                        "fields": "id",
+                        "access_token": self.app.config.bot.token,
+                    },
+                )
         ) as resp:
             try:
                 data = await resp.json()
                 # вот это вот возвращает массив вк-объектов "пользователь"
                 users = data["response"]["profiles"]
-                self.logger.info(users)
-                # по идее вот эта вот конструкция оставит только тех, кто онлайн
-                users = [u for u in users if u.online == 1]
                 self.logger.info(users)
                 # если их больше 6, выведется сообщение и предупреждение
                 if len(users) > MAX_PLAYERS_IN_TEAM:
@@ -208,7 +198,7 @@ class VKApiAccessor(BaseAccessor):
             # я предполагаю, что исключение будет только в том,
             # что боту без прав администратора не дадут информацию
             # data придёт пустая, и грозит KeyError
-            except Exception:
+            except KeyError:
                 await self.send_message_to_chat(
                     chat_id=chat_id,
                     message=ASK_FOR_RIGHTS,
@@ -217,12 +207,12 @@ class VKApiAccessor(BaseAccessor):
 
     @staticmethod
     async def one_button_creater(
-        text: str, color: str, payload: str = " "
+            text: str, color: str, payload: str = '{"button": "' + "1" + '"}'
     ) -> dict:
         return {
             "action": {
                 "type": "text",
-                "payload": f"{payload}",
+                "payload": payload,
                 "label": text,
             },
             "color": color,
@@ -243,14 +233,20 @@ class VKApiAccessor(BaseAccessor):
         keyboard = json.dumps(keyboard, ensure_ascii=False).encode("utf-8")
         return str(keyboard.decode("utf-8"))
 
-    async def get_captain_game_keyboard(self) -> str:
+    async def get_captain_game_keyboard(self, cap_vk_id: int) -> str:
+        c_vk_id = str(cap_vk_id)
         keyboard = {
             "inline": True,
             "buttons": [
                 await self.one_button_creater(
-                    CHOOSE_ANSWERING_COMMAND, "positive"
+                    text=CHOOSE_ANSWERING_COMMAND,
+                    color="positive",
+                    payload=c_vk_id
                 ),
-                await self.one_button_creater(STOP_GAME_COMMAND, "secondary"),
+                await self.one_button_creater(
+                    text=STOP_GAME_COMMAND,
+                    color="secondary",
+                    payload=c_vk_id),
             ],
         }
         keyboard = json.dumps(keyboard, ensure_ascii=False).encode("utf-8")

@@ -13,6 +13,7 @@ class UpdateMessage:
     text: str
     id: int
     peer_id: int
+    payload: str
 
 
 @dataclass

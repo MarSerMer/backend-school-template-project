@@ -1,5 +1,6 @@
 from typing import TYPE_CHECKING, Any, TypeVar
 
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import (
     AsyncEngine,
     AsyncSession,
@@ -8,6 +9,7 @@ from sqlalchemy.ext.asyncio import (
 )
 from sqlalchemy.orm import DeclarativeBase
 
+from app.game.models import Game
 from app.store.database.sqlalchemy_base import BaseModel
 
 if TYPE_CHECKING:
@@ -52,3 +54,12 @@ class Database:
             else:
                 session.add(obj)
             await session.commit()
+
+    async def add_game_with_return(self, obj: Game) -> Game:
+        # returning не работал, победить не удалось
+            await self.add_to_database(obj=obj)
+            query = select(Game).where(Game.captain == obj.captain
+                                       and Game.chat_id == obj.chat_id
+                                       and Game.finished == "Not finished")
+            new_game = await self.select_from_database(query)
+            return new_game.scalar()

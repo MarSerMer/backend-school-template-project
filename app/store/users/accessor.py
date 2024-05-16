@@ -15,8 +15,13 @@ class UserAccessor(BaseAccessor):
         res = await self.app.database.select_from_database(query=query)
         return res.scalar()
 
+    async def get_user_by_id(self, db_id: int) -> UserModel | None:
+        query = select(UserModel).where(UserModel.id == db_id)
+        res = await self.app.database.select_from_database(query=query)
+        return res.scalar()
+
     async def add_user_to_db(
-        self, vk_id: int, first_name: str, last_name: str
+            self, vk_id: int, first_name: str, last_name: str
     ) -> None:
         if not await self.get_user_by_vk_id(vk_id=vk_id):
             user = UserModel(
@@ -28,10 +33,11 @@ class UserAccessor(BaseAccessor):
         await self.app.database.add_to_database(users)
 
     async def get_many_users_by_vk_id(
-        self, vk_ids: list[int]
+            self, vk_ids: list[int]
     ) -> list[UserModel] | None:
         query = select(UserModel).where(UserModel.vk_id.in_(vk_ids))
         res = await self.app.database.select_from_database(query)
         users = res.scalars().all()
         users_listed = list(users)
         return users_listed or None
+
